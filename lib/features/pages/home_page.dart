@@ -24,7 +24,7 @@ import 'book_search_page.dart';
 import 'wishlist_page.dart';
 import 'read_books_page.dart';
 import 'notes_page.dart';
-
+import 'package:book_tracker_app/features/widgets/nav_item.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

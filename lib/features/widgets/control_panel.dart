@@ -1,31 +1,6 @@
 import 'package:flutter/material.dart';
-
-enum NavItem {
-  home,        // Главная
-  wishlist,    // Вишлист
-  search,      // Поиск
-  completed,   // Прочитанное
-  notes,       // Заметки
-}
-
-/// Кастомная нижняя панель навигации для приложения BookTracker
-/// 
-/// Этот виджет предоставляет:
-/// - Интуитивную навигацию между основными разделами приложения
-/// - Визуальную индикацию текущего раздела через выделение активной кнопки
-/// - Единый стиль с брендовыми цветами приложения
-/// - Плавные переходы между состояниями кнопок
-/// 
-/// Особенности дизайна:
-/// - Активная кнопка отображается как коричневый кружок с белой иконкой
-/// - Неактивные кнопки - серые иконки без фона
-/// - Тень для создания эффекта "парящей" панели
-/// - Фиксированная высота 70px для оптимального UX
-/// 
-/// Принцип работы:
-/// - Получает текущее состояние через параметр selectedItem
-/// - Передает пользовательские взаимодействия через callback onItemTapped
-/// - Автоматически перерисовывается при изменении состояния
+import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/nav_item.dart';
 
 class ControlPanel extends StatelessWidget {
   final NavItem selectedItem;
@@ -40,61 +15,51 @@ class ControlPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color primaryBrown = Color.fromRGBO(107, 79, 57, 1.0);
-    const Color inactiveColor = Colors.grey;
+    const Color backgroundColor = Color(0xFFF4ECE1);
 
     return Container(
       height: 70,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: backgroundColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, -5),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // Кнопка 1: Главная
           _buildNavItem(
             item: NavItem.home,
-            icon: Icons.home_outlined,
+            iconPath: 'assets/icons/home.svg',
             activeColor: primaryBrown,
-            inactiveColor: inactiveColor,
             isSelected: selectedItem == NavItem.home,
           ),
-          // Кнопка 2: Вишлист
           _buildNavItem(
             item: NavItem.wishlist,
-            icon: Icons.favorite_border,
+            iconPath: 'assets/icons/wishlist.svg',
             activeColor: primaryBrown,
-            inactiveColor: inactiveColor,
             isSelected: selectedItem == NavItem.wishlist,
           ),
-          // Кнопка 3: Поиск
           _buildNavItem(
             item: NavItem.search,
-            icon: Icons.search,
+            iconPath: 'assets/icons/search.svg',
             activeColor: primaryBrown,
-            inactiveColor: inactiveColor,
             isSelected: selectedItem == NavItem.search,
           ),
-          // Кнопка 4: Прочитанное
           _buildNavItem(
             item: NavItem.completed,
-            icon: Icons.check_box_outlined,
+            iconPath: 'assets/icons/completed.svg',
             activeColor: primaryBrown,
-            inactiveColor: inactiveColor,
             isSelected: selectedItem == NavItem.completed,
           ),
-          // Кнопка 5: Заметки
           _buildNavItem(
             item: NavItem.notes,
-            icon: Icons.notes_outlined,
+            iconPath: 'assets/icons/notes.svg',
             activeColor: primaryBrown,
-            inactiveColor: inactiveColor,
             isSelected: selectedItem == NavItem.notes,
           ),
         ],
@@ -102,27 +67,14 @@ class ControlPanel extends StatelessWidget {
     );
   }
 
-    /// Создает отдельный элемент навигации с учетом его состояния
-  /// 
-  /// @param item - идентификатор пункта навигации
-  /// @param icon - иконка Material Icons для отображения
-  /// @param activeColor - цвет для активного состояния
-  /// @param inactiveColor - цвет для неактивного состояния
-  /// @param isSelected - флаг указывающий является ли элемент текущим
-  /// 
-  /// @return Widget - кнопка навигации в соответствующем состоянии:
-  /// - Активная: кружок с цветом activeColor и белой иконкой
-  /// - Неактивная: простая иконка цвета inactiveColor
-
   Widget _buildNavItem({
     required NavItem item,
-    required IconData icon,
+    required String iconPath,
     required Color activeColor,
-    required Color inactiveColor,
     required bool isSelected,
   }) {
     if (isSelected) {
-      // Активная кнопка с кружком (для всех кнопок)
+      // Активная кнопка - белая иконка на коричневом фоне
       return InkWell(
         onTap: () => onItemTapped(item),
         child: Container(
@@ -131,17 +83,21 @@ class ControlPanel extends StatelessWidget {
             color: activeColor,
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
+          child: SvgPicture.asset(
+            iconPath,
+            width: 28,
+            height: 28,
           ),
         ),
       );
     } else {
-      // Неактивная кнопка (простая иконка)
+      // Неактивная кнопка - оригинальный цвет иконки (черный)
       return IconButton(
-        icon: Icon(icon, color: inactiveColor, size: 24),
+        icon: SvgPicture.asset(
+          iconPath,
+          width: 24,
+          height: 24,
+        ),
         onPressed: () => onItemTapped(item),
       );
     }
