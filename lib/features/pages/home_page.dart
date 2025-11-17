@@ -16,6 +16,7 @@
 /// 1. Хранит текущее состояние выбранной вкладки в _selectedItem
 /// 2. Содержит список всех страниц _pages в соответствующем порядке
 /// 3. При нажатии на кнопку в ControlPanel обновляет состояние и отображает нужную страницу
+library;
 
 import 'package:flutter/material.dart';
 import '../widgets/control_panel.dart';
@@ -27,16 +28,17 @@ import 'notes_page.dart';
 import 'package:book_tracker_app/features/widgets/nav_item.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final NavItem? initialItem; 
+
+  const HomePage({super.key, this.initialItem}); 
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  NavItem _selectedItem = NavItem.home;
+  late NavItem _selectedItem;
 
-  // Создаем список страниц сразу, без initState
   final List<Widget> _pages = [
     const HomeMainPage(),   // 0: NavItem.home
     const WishlistPage(),   // 1: NavItem.wishlist
@@ -45,31 +47,21 @@ class _HomePageState extends State<HomePage> {
     const NotesPage(),      // 4: NavItem.notes
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _selectedItem = widget.initialItem ?? NavItem.home;
+  }
+
   void _onItemTapped(NavItem item) {
     setState(() {
       _selectedItem = item;
     });
   }
 
-  String _getTitle() {
-    switch (_selectedItem) {
-      case NavItem.home:
-        return 'Главная';
-      case NavItem.wishlist:
-        return 'Список Желаемого';
-      case NavItem.search:
-        return 'Поиск Книг';
-      case NavItem.completed:
-        return 'Прочитанное';
-      case NavItem.notes:
-        return 'Заметки';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Добавляем проверку на валидность индекса
       body: _pages[_selectedItem.index],
       
       bottomNavigationBar: ControlPanel(
