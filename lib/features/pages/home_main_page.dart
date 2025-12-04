@@ -1,26 +1,30 @@
-library;
-
 import 'package:flutter/material.dart';
+// Импортируем маршруты
+import '../routes/app_routes.dart';
+import '../widgets/nav_item.dart';
+import 'statistics_page.dart';
+
 
 class HomeMainPage extends StatelessWidget {
-  const HomeMainPage({super.key});
+  final ValueChanged<NavItem>? onNavigateTo;
+  const HomeMainPage({super.key, this.onNavigateTo});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4ECE1), // Бежевый фон страницы
+      backgroundColor: const Color(0xFFF4ECE1),
       body: SafeArea(
         child: Stack(
           children: [
-            // Вытянутый эллипс - смещен еще больше влево и цвет C8C8C8
+            // Фоновая фигура
             Positioned(
-              left: -MediaQuery.of(context).size.width * 0.5, // Еще больше смещение влево
+              left: -MediaQuery.of(context).size.width * 0.5,
               bottom: -MediaQuery.of(context).size.height * 0.2,
               child: Container(
                 width: MediaQuery.of(context).size.width * 1.4,
                 height: MediaQuery.of(context).size.height * 1.0,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC8C8C8), // Новый цвет C8C8C8
+                  color: const Color(0xFFC8C8C8),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(MediaQuery.of(context).size.width * 0.7),
                     topRight: Radius.circular(MediaQuery.of(context).size.width * 0.7),
@@ -31,13 +35,12 @@ class HomeMainPage extends StatelessWidget {
               ),
             ),
 
-            // Контент
+            // Основной контент
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // Выравнивание влево как карточки
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Заголовок Welcome - с таким же отступом слева как карточки
                   const Padding(
                     padding: EdgeInsets.only(top: 10.0, bottom: 30.0, left: 16.0),
                     child: Text(
@@ -51,47 +54,45 @@ class HomeMainPage extends StatelessWidget {
                     ),
                   ),
 
-
-                  // Центрируем карточки с фиксированной шириной
                   Center(
-                    child: SizedBox(
-                      width: 310, // Фиксированная ширина как в Figma
-                      child: Column(
-                        children: [
-                          _buildFeatureCard(
-                            context,
-                            title: 'Добавьте книгу',
-                            subtitle: 'Есть ли книга, которую вы читаете сейчас? Отмечайте прогресс и следите за ним',
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          _buildFeatureCard(
-                            context,
-                            title: 'Вишлист',
-                            subtitle: 'Есть ли книга, которую вы хотите прочитать? Так она не потеряется в заметках :)',
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          _buildFeatureCard(
-                            context,
-                            title: 'Прочитанные',
-                            subtitle: 'Уже прочитали книгу? Добавьте, чтобы собрать личную библиотеку и знать, что советовать другим',
-                            onTap: () {},
-                          ),
-                          const SizedBox(height: 20),
-                          
-                          _buildFeatureCard(
-                            context,
-                            title: 'Статистика',
-                            subtitle: 'Хотите узнать сколько книг вы прочитали? Тогда переходите сюда и узнавайте всё о вашем чтении',
-                            onTap: () {},
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+  child: SizedBox(
+    width: 310,
+    child: Column(
+      children: [
+        _buildFeatureCard(
+          context,
+          title: 'Добавьте книгу',
+          subtitle: 'Есть ли книга, которую вы читаете сейчас? Отмечайте прогресс и следите за ним',
+          onTap: () => _navigateToBookSearchPage(context),
+        ),
+        const SizedBox(height: 20),
+        
+        _buildFeatureCard(
+          context,
+          title: 'Вишлист',
+          subtitle: 'Есть ли книга, которую вы хотите прочитать? Так она не потеряется в заметках :)',
+          onTap: () => _navigateToWishlistPage(context),
+        ),
+        const SizedBox(height: 20),
+        
+        _buildFeatureCard(
+          context,
+          title: 'Прочитанные',
+          subtitle: 'Уже прочитали книгу? Добавьте, чтобы собрать личную библиотеку и знать, что советовать другим',
+          onTap: () => _navigateToReadBooksPage(context),
+        ),
+        const SizedBox(height: 20),
+        
+        _buildFeatureCard(
+          context,
+          title: 'Статистика',
+          subtitle: 'Хотите узнать сколько книг вы прочитали? Тогда переходите сюда и узнавайте всё о вашем чтении',
+          onTap: () => _navigateToStatisticsPage(context),
+        ),
+      ],
+    ),
+  ),
+),
 
                   const SizedBox(height: 40),
                 ],
@@ -120,7 +121,7 @@ class HomeMainPage extends StatelessWidget {
           bottomRight: Radius.circular(30),
         ),
         side: BorderSide(
-          color: const Color(0xFFC8C8C8).withOpacity(0.5), // Рамка цвета C8C8C8
+          color: const Color(0xFFC8C8C8).withOpacity(0.5),
           width: 1.5,
         ),
       ),
@@ -168,6 +169,31 @@ class HomeMainPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+  void _navigateToBookSearchPage(BuildContext context) {
+    if (onNavigateTo != null) {
+      onNavigateTo!(NavItem.search); // Переключаем на поиск в HomePage
+    }
+  }
+
+  void _navigateToWishlistPage(BuildContext context) {
+    if (onNavigateTo != null) {
+      onNavigateTo!(NavItem.wishlist); // Переключаем на вишлист
+    }
+  }
+
+  void _navigateToReadBooksPage(BuildContext context) {
+    if (onNavigateTo != null) {
+      onNavigateTo!(NavItem.completed); // Переключаем на прочитанные
+    }
+  }
+
+  void _navigateToStatisticsPage(BuildContext context) {
+    // Если статистики нет в ControlPanel, пока оставляем как есть
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) =>    StatisticsPage()),
     );
   }
 }

@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
-import 'features/pages/home_page.dart'; 
-
 import 'package:provider/provider.dart';
+import 'features/routes/app_routes.dart'; // Импорт маршрутов
 import 'features/pages/wishlist_provider.dart';
 import 'features/pages/read_books_provider.dart';
-
-Widget build(BuildContext context) {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => WishlistProvider()),
-      ChangeNotifierProvider(create: (_) => ReadBooksProvider()),
-    ],
-    child: MaterialApp(
-      title: 'BookTracker',
-      home: HomePage(),
-    ),
-  );
-}
 
 void main() {
   runApp(const BookTrackerApp());
@@ -24,15 +10,27 @@ void main() {
 
 class BookTrackerApp extends StatelessWidget {
   const BookTrackerApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'BookTracker',
-      home: HomePage(), 
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProvider(create: (_) => ReadBooksProvider()),
+      ],
+      child: MaterialApp(
+        title: 'BookTracker',
+        theme: ThemeData(
+          primarySwatch: Colors.brown,
+          scaffoldBackgroundColor: const Color(0xFFF4ECE1),
+          fontFamily: 'Montserrat',
+        ),
+        initialRoute: AppRoutes.home,
+        onGenerateRoute: AppRoutes.generateRoute,
+      ),
     );
   }
 }
-
 // старый main
 // пусть будет навсякий, если не надо, удалите 
 

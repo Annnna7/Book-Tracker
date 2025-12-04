@@ -12,6 +12,7 @@
 /// - Иммутабельные обновления через copyWith
 /// - Обработку различных форматов данных API
 /// - Грациозную обработку отсутствующих данных
+/// - Сериализацию для локального хранения
 /// 
 /// Архитектурная роль:
 /// - Единый источник истины для данных о книгах
@@ -101,13 +102,51 @@ class Book {
       totalPages: json['number_of_pages'] ?? json['total_pages'],
       firstPublishDate: json['first_publish_date'], 
       subjects: _parseStringList(json['subjects']), 
-      subjectPlaces:
-          _parseStringList(json['subject_places']), 
-      subjectTimes:
-          _parseStringList(json['subject_times']), 
+      subjectPlaces: _parseStringList(json['subject_places']), 
+      subjectTimes: _parseStringList(json['subject_times']), 
       key: json['key'],
     );
   }
+
+
+  // Конструктор для загрузки из Map (из SharedPreferences)
+  factory Book.fromMap(Map<String, dynamic> map) {
+    return Book(
+      title: map['title'] ?? '',
+      author: map['author'] ?? 'Неизвестный автор',
+      coverUrl: map['coverUrl'],
+      description: map['description'],
+      genre: map['genre'],
+      publisher: map['publisher'],
+      totalPages: map['totalPages'],
+      firstPublishDate: map['firstPublishDate'],
+      subjects: map['subjects'] != null ? List<String>.from(map['subjects']) : null,
+      subjectPlaces: map['subjectPlaces'] != null ? List<String>.from(map['subjectPlaces']) : null,
+      subjectTimes: map['subjectTimes'] != null ? List<String>.from(map['subjectTimes']) : null,
+      key: map['key'],
+    );
+  }
+
+  // Метод для сериализации в Map (для сохранения)
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'author': author,
+      'coverUrl': coverUrl,
+      'description': description,
+      'genre': genre,
+      'publisher': publisher,
+      'totalPages': totalPages,
+      'firstPublishDate': firstPublishDate,
+      'subjects': subjects,
+      'subjectPlaces': subjectPlaces,
+      'subjectTimes': subjectTimes,
+      'key': key,
+    };
+  }
+
+  // Метод для сериализации в JSON строку
+  Map<String, dynamic> toJson() => toMap();
 
   static String _extractAuthorName(String authorKey) {
     final parts = authorKey.split('/').last;
@@ -140,22 +179,43 @@ class Book {
     List<String>? subjectTimes, 
     int? totalPages,
     String? publisher, 
-  String? genre,
+    String? genre,
   }) {
     return Book(
       title: title ?? this.title,
       author: author ?? this.author,
       coverUrl: coverUrl ?? this.coverUrl,
       key: key ?? this.key,
-      description:
-          description ?? this.description, 
+      description: description ?? this.description, 
       firstPublishDate: firstPublishDate ?? this.firstPublishDate,
       subjects: subjects ?? this.subjects,
       subjectPlaces: subjectPlaces ?? this.subjectPlaces,
       subjectTimes: subjectTimes ?? this.subjectTimes,
       totalPages: totalPages ?? this.totalPages,
       publisher: publisher ?? this.publisher, 
-    genre: genre ?? this.genre,
+      genre: genre ?? this.genre,
     );
+  }
+
+  // Переопределение equals и hashCode для сравнения книг по ключу
+  @override
+bool operator ==(Object other) {
+  if (identical(this, other)) return true;
+  
+  return other is Book &&
+      runtimeType == other.runtimeType &&
+      ((key != null && other.key != null && key == other.key) ||
+       (title == other.title && author == other.author));
+}
+  @override
+  int get hashCode {
+    if (key != null) return key.hashCode;
+    return title.hashCode ^ author.hashCode;
+  }
+
+  // Для отладки
+  @override
+  String toString() {
+    return 'Book(title: $title, author: $author)';
   }
 }

@@ -28,7 +28,7 @@ import 'notes_page.dart';
 import 'package:book_tracker_app/features/widgets/nav_item.dart';
 
 class HomePage extends StatefulWidget {
-  final NavItem? initialItem; 
+  final NavItem? initialItem;
 
   const HomePage({super.key, this.initialItem}); 
 
@@ -61,13 +61,23 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedItem.index],
-      
-      bottomNavigationBar: ControlPanel(
-        selectedItem: _selectedItem,
-        onItemTapped: _onItemTapped,
-      ),
-    );
-  }
+  return Scaffold(
+    body: IndexedStack(
+      index: _selectedItem.index,
+      children: [
+        // Передаем callback в HomeMainPage
+        HomeMainPage(onNavigateTo: _onItemTapped),
+        const WishlistPage(),
+        const BookSearchPage(),
+        const ReadBooksPage(),
+        const NotesPage(),
+      ],
+    ),
+    
+    bottomNavigationBar: ControlPanel(
+      selectedItem: _selectedItem,
+      onItemTapped: _onItemTapped,
+    ),
+  );
+}
 }

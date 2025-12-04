@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'book_search_page.dart'; 
+import 'book_search_page.dart';
+
 
 /// Модель данных для заметки
 class Note {
