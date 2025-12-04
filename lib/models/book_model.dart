@@ -48,6 +48,20 @@ class Book {
     this.key,
   });
 
+  const Book.simple({
+    required this.title,
+    required this.author,
+    this.coverUrl,
+    this.description,
+  }) : genre = null,
+       publisher = null,
+       totalPages = null,
+       firstPublishDate = null,
+       subjects = null,
+       subjectPlaces = null,
+       subjectTimes = null,
+       key = null;
+
   // Исправленный фабричный метод fromJson
   factory Book.fromJson(Map<String, dynamic> json) {
     // 1. Автор

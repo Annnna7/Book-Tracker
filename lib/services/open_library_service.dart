@@ -1,5 +1,5 @@
 import 'api_service.dart';
-import '../models/Book.dart';
+import '../../models/book_model.dart';
 
 /// Сервис для работы с OpenLibrary API
 class OpenLibraryService {

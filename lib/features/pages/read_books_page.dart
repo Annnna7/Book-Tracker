@@ -1,19 +1,29 @@
 /// Страница архива прочитанных книг в приложении BookTracker
-///
+/// 
 /// Этот экран предназначен для отображения и управления:
 /// - Полным архивом книг, завершенных пользователем
 /// - Статистики и аналитики по прочитанному
-/// - Хронологии чтения и личных достижений
-/// - Возможности повторного просмотра и оценки книг
-library;
 
 import 'package:flutter/material.dart';
-import '../../models/Book.dart';
+
+// --- Модель книги (замените на вашу реальную модель) ---
+class Book {
+  final String title;
+  final String author;
+  final String? coverUrl;
+  
+  Book({
+    required this.title,
+    required this.author,
+    this.coverUrl,
+  });
+}
 
 // --- Константы для цветов и стилей ---
 const Color _primaryBrown = Color(0xFF765745);
 const Color _secondaryCream = Color(0xFFF7F3EE);
 const Color _lightCardColor = Color(0xFFE0D9D1);
+const Color _darkBrown = Color.fromARGB(255, 55, 38, 22);
 
 class ReadBooksPage extends StatelessWidget {
   const ReadBooksPage({super.key});
@@ -193,7 +203,7 @@ class _BookCard extends StatelessWidget {
           margin: const EdgeInsets.only(top: 0),
           padding: const EdgeInsets.only(left: 20, top: 15, right: 20, bottom: 20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
@@ -242,7 +252,7 @@ class _BookCard extends StatelessWidget {
                     Text(
                       book.author,
                       style: const TextStyle(
-                        color: _lightCardColor,
+                        color: _darkBrown,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -252,7 +262,7 @@ class _BookCard extends StatelessWidget {
                     Text(
                       book.title,
                       style: const TextStyle(
-                        color: _secondaryCream,
+                        color: _primaryBrown,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -293,7 +303,7 @@ class _BookCard extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 55, 38, 22),
+              color: _darkBrown,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
@@ -326,9 +336,9 @@ class _BookCard extends StatelessWidget {
 
   Widget _buildPlaceholderCover() {
     return Container(
-      color: Colors.grey,
-      child: const Center(
-        child: Icon(Icons.book, color: Colors.white, size: 40),
+      color: _lightCardColor,
+      child: Center(
+        child: Icon(Icons.book, color: _primaryBrown, size: 40),
       ),
     );
   }

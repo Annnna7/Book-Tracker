@@ -1,6 +1,6 @@
 import 'open_library_service.dart';
 import 'google_books_service.dart';
-import '../models/Book.dart';
+import '../../models/book_model.dart';
 
 /// Унифицированный сервис для работы с книгами из разных источников
 class BookService {

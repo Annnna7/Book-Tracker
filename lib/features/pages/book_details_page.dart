@@ -22,12 +22,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../models/Book.dart';
+import '../../models/book_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/control_panel.dart';
 import 'home_page.dart';
 import 'package:book_tracker_app/features/widgets/nav_item.dart';
+import 'package:provider/provider.dart';
+import 'wishlist_provider.dart';
+import 'read_books_provider.dart';
 
 class BookDetailsPage extends StatefulWidget {
   final Book book;
@@ -46,38 +49,13 @@ class _BookDetailsPageState extends State<BookDetailsPage> {
   final NavItem _selectedNavItem = NavItem.search;
   double _userRating = 5.0;
 
+  // Флаги состояния книги
+  bool _isInWishlist = false;
+  bool _isInReadBooks = false;
+
   // Вспомогательный getter, который всегда возвращает актуальные данные
   Book get displayBook => _fullBookData ?? widget.book;
 
-void _onNavItemTapped(NavItem item) {
-  print('Навигация: Переход на главный экран с вкладкой ${item.name}');
-  
-  NavItem targetItem;
-  switch (item) {
-    case NavItem.home:
-      targetItem = NavItem.home;
-      break;
-    case NavItem.search:
-      targetItem = NavItem.search;
-      break;
-    case NavItem.completed:
-      targetItem = NavItem.completed; 
-      break;
-    case NavItem.wishlist:
-      targetItem = NavItem.wishlist;
-      break;
-    case NavItem.notes:
-      targetItem = NavItem.notes;
-      break;
-  }
-
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (context) => HomePage(initialItem: targetItem),
-    ),
-  );
-}
   @override
   void initState() {
     super.initState();
@@ -227,7 +205,7 @@ void _onNavItemTapped(NavItem item) {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Отображаем индикатор загрузки, пока данные не придут
+    // 1. Отображаем индикатор загрузки, пока данные не придут
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color.fromRGBO(240, 230, 210, 1.0),
@@ -246,11 +224,12 @@ void _onNavItemTapped(NavItem item) {
       );
     }
 
+    // После загрузки данных проверяем состояние книги
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _printCompleteBookData(displayBook);
+      _checkBookState();
     });
 
-    // 3. Отображаем содержимое, используя displayBook
+    // 2. Отображаем содержимое, используя displayBook
     return Scaffold(
       backgroundColor: const Color(0xFF765745), // Белый фон для всей страницы
       body: Stack(
@@ -271,6 +250,109 @@ void _onNavItemTapped(NavItem item) {
             child: _buildBottomNavigationBar(),
           ),
         ],
+      ),
+    );
+  }
+
+  void _checkBookState() {
+    final book = _fullBookData ?? widget.book;
+    final wishlistProvider =
+        Provider.of<WishlistProvider>(context, listen: false);
+    final readBooksProvider =
+        Provider.of<ReadBooksProvider>(context, listen: false);
+
+    setState(() {
+      _isInWishlist = wishlistProvider.isInWishlist(book);
+      _isInReadBooks = readBooksProvider.isInReadBooks(book);
+    });
+  }
+
+  void _toggleWishlist() {
+    final book = _fullBookData ?? widget.book;
+    final wishlistProvider =
+        Provider.of<WishlistProvider>(context, listen: false);
+
+    final wasInWishlist = _isInWishlist;
+
+    setState(() {
+      _isInWishlist = !_isInWishlist;
+    });
+
+    if (wasInWishlist) {
+      wishlistProvider.removeFromWishlist(book);
+    } else {
+      wishlistProvider.addToWishlist(book);
+    }
+
+    // Показать уведомление
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          wasInWishlist
+              ? 'Книга удалена из вишлиста'
+              : 'Книга добавлена в вишлист!',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _toggleReadBook() {
+    final book = _fullBookData ?? widget.book;
+    final readBooksProvider =
+        Provider.of<ReadBooksProvider>(context, listen: false);
+
+    final wasInReadBooks = _isInReadBooks;
+
+    setState(() {
+      _isInReadBooks = !_isInReadBooks;
+    });
+
+    if (wasInReadBooks) {
+      readBooksProvider.removeFromReadBooks(book);
+    } else {
+      readBooksProvider.addToReadBooks(book);
+    }
+
+    // Показать уведомление
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          wasInReadBooks
+              ? 'Книга удалена из прочитанного'
+              : 'Книга добавлена в прочитанное!',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onNavItemTapped(NavItem item) {
+    print('Навигация: Переход на главный экран с вкладкой ${item.name}');
+
+    NavItem targetItem;
+    switch (item) {
+      case NavItem.home:
+        targetItem = NavItem.home;
+        break;
+      case NavItem.search:
+        targetItem = NavItem.search;
+        break;
+      case NavItem.completed:
+        targetItem = NavItem.completed;
+        break;
+      case NavItem.wishlist:
+        targetItem = NavItem.wishlist;
+        break;
+      case NavItem.notes:
+        targetItem = NavItem.notes;
+        break;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomePage(initialItem: targetItem),
       ),
     );
   }
@@ -297,95 +379,96 @@ void _onNavItemTapped(NavItem item) {
   // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДОЛЖНЫ ПРИНИМАТЬ КНИГУ КАК ПАРАМЕТР ---
 
   Widget _buildTopSection(BuildContext context, Book book) {
-  const Color primaryBrown = Color(0xFF765745);
-  const Color lightBeige = Color(0xFFF4ECE1);
+    const Color primaryBrown = Color(0xFF765745);
+    const Color lightBeige = Color(0xFFF4ECE1);
 
-  return Container(
-    color: primaryBrown,
-    child: Align( // Явное выравнивание по левому краю
-      alignment: Alignment.centerLeft,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        decoration: const BoxDecoration(
-          color: lightBeige,
-          borderRadius: BorderRadius.only(
-            bottomRight: Radius.circular(30),
+    return Container(
+      color: primaryBrown,
+      child: Align(
+        // Явное выравнивание по левому краю
+        alignment: Alignment.centerLeft,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          decoration: const BoxDecoration(
+            color: lightBeige,
+            borderRadius: BorderRadius.only(
+              bottomRight: Radius.circular(30),
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // СТРЕЛКА НАЗАД
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 16,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: primaryBrown.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: primaryBrown,
-                    size: 24,
+          child: Stack(
+            children: [
+              // СТРЕЛКА НАЗАД
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 16,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: primaryBrown.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: primaryBrown,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // ОСНОВНОЙ КОНТЕНТ
-            Padding(
-              padding: const EdgeInsets.only(
-                top: 70,
-                left: 25,
-                right: 25,
-                bottom: 20,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // НАЗВАНИЕ КНИГИ
-                  Container(
-                    padding: const EdgeInsets.only(left: 40),
-                    child: Text(
-                      book.title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: primaryBrown,
-                        height: 1.2,
+              // ОСНОВНОЙ КОНТЕНТ
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 70,
+                  left: 25,
+                  right: 25,
+                  bottom: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // НАЗВАНИЕ КНИГИ
+                    Container(
+                      padding: const EdgeInsets.only(left: 40),
+                      child: Text(
+                        book.title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: primaryBrown,
+                          height: 1.2,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // ОБЛОЖКА И ИНФОРМАЦИЯ
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildBookCover(book),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildBookDetailsCard(primaryBrown, book),
-                      ),
-                    ],
-                  ),
-                ],
+                    // ОБЛОЖКА И ИНФОРМАЦИЯ
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildBookCover(book),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildBookDetailsCard(primaryBrown, book),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildBookCover(Book book) {
     return ClipRRect(
@@ -698,7 +781,7 @@ void _onNavItemTapped(NavItem item) {
                 '0/${book.totalPages ?? 'Н/Д'}',
                 style: const TextStyle(
                   fontSize: 14,
-                  color:   Color.fromARGB(255, 129, 129, 129),
+                  color: Color.fromARGB(255, 129, 129, 129),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -734,7 +817,9 @@ void _onNavItemTapped(NavItem item) {
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9D9),
+                    color: _isInReadBooks
+                        ? const Color(0xFF4CAF50) // Зеленый если уже в прочитанном
+                        : const Color(0xFFD9D9D9),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
@@ -745,27 +830,33 @@ void _onNavItemTapped(NavItem item) {
                     ],
                   ),
                   child: InkWell(
-                    onTap: () {
-                      // Обработка нажатия "В прочитанное"
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.all(12.0),
+                    onTap: () => _toggleReadBook(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.check_circle_outline,
-                            color: Color.fromRGBO(107, 79, 57, 1.0),
+                            _isInReadBooks
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                            color: _isInReadBooks
+                                ? Colors.white
+                                : const Color.fromRGBO(107, 79, 57, 1.0),
                             size: 24,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Добавить книгу в прочитанное',
+                              _isInReadBooks
+                                  ? 'В прочитанном'
+                                  : 'Добавить книгу в прочитанное',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromRGBO(107, 79, 57, 1.0),
+                                color: _isInReadBooks
+                                    ? Colors.white
+                                    : const Color.fromRGBO(107, 79, 57, 1.0),
                               ),
                               maxLines: 2,
                               textAlign: TextAlign.center,
@@ -779,12 +870,15 @@ void _onNavItemTapped(NavItem item) {
                 ),
               ),
               const SizedBox(width: 12),
+
               // Кнопка "В вишлист"
               Expanded(
                 child: Container(
                   height: 70,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9D9),
+                    color: _isInWishlist
+                        ? const Color(0xFFE91E63) // Розовый если уже в вишлисте
+                        : const Color(0xFFD9D9D9),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
@@ -795,27 +889,33 @@ void _onNavItemTapped(NavItem item) {
                     ],
                   ),
                   child: InkWell(
-                    onTap: () {
-                      // Обработка нажатия "В вишлист"
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.all(12.0),
+                    onTap: () => _toggleWishlist(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.favorite_border,
-                            color: Color.fromRGBO(107, 79, 57, 1.0),
+                            _isInWishlist
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: _isInWishlist
+                                ? Colors.white
+                                : const Color.fromRGBO(107, 79, 57, 1.0),
                             size: 24,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Добавить внигу в вишлист',
+                              _isInWishlist
+                                  ? 'В вишлисте'
+                                  : 'Добавить книгу в вишлист',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromRGBO(107, 79, 57, 1.0),
+                                color: _isInWishlist
+                                    ? Colors.white
+                                    : const Color.fromRGBO(107, 79, 57, 1.0),
                               ),
                               maxLines: 2,
                               textAlign: TextAlign.center,
@@ -836,7 +936,7 @@ void _onNavItemTapped(NavItem item) {
     );
   }
 
-// Новый метод для создания интерактивной кнопки оценки
+  // Новый метод для создания интерактивной кнопки оценки
   Widget _buildRatingChip(double rating) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -887,8 +987,7 @@ void _onNavItemTapped(NavItem item) {
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color:
-                  Color.fromRGBO(107, 79, 57, 1.0), 
+              color: Color.fromRGBO(107, 79, 57, 1.0),
             ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
@@ -991,10 +1090,8 @@ void _onNavItemTapped(NavItem item) {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromRGBO(107, 79, 57, 1.0),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8),
+                          backgroundColor: const Color.fromRGBO(107, 79, 57, 1.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
                         onPressed: () {
                           setState(() {
@@ -1008,9 +1105,8 @@ void _onNavItemTapped(NavItem item) {
                             color: Colors.white,
                             fontSize: 14,
                           ),
-                          maxLines: 1, 
-                          overflow: TextOverflow
-                              .ellipsis, 
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
@@ -1027,7 +1123,9 @@ void _onNavItemTapped(NavItem item) {
   // --- ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ---
 
   Widget _buildInfoChip(
-      {required IconData icon, required String text, required String subtext}) {
+      {required IconData icon,
+      required String text,
+      required String subtext}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
@@ -1056,8 +1154,7 @@ void _onNavItemTapped(NavItem item) {
                 // Обернули в Flexible
                 child: Text(
                   text.toUpperCase(),
-                  style: const TextStyle(
-                      fontSize: 10, color: Colors.grey), 
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),

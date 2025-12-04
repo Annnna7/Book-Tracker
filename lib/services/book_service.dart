@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/Book.dart';
+import '../../models/book_model.dart';
 
 /// Сервис для работы с API OpenLibrary
 /// 
